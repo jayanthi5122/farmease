@@ -1,0 +1,223 @@
+from django.db.models import Q
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib import messages
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.models import User
+from .models import Crop, Order, UserProfile
+
+# ---------------------------
+# Home Page
+# ---------------------------
+def home(request):
+    return render(request, "home.html")
+
+
+# ---------------------------
+# User Signup
+# ---------------------------
+def user_signup(request):
+    if request.method == 'POST':
+        name = request.POST.get('name', '').strip()
+        email = request.POST.get('email', '').strip()
+        password = request.POST.get('password', '').strip()
+        role = request.POST.get('role', '').strip()
+
+        if not name or not email or not password or not role:
+            messages.error(request, "All fields are required.")
+            return render(request, "user_signup.html")
+
+        if User.objects.filter(username=email).exists():
+            messages.error(request, "Email already registered! Please log in.")
+            return render(request, "user_signup.html")
+
+        try:
+            user = User.objects.create_user(
+                username=email,
+                email=email,
+                password=password,
+                first_name=name
+            )
+            UserProfile.objects.create(user=user, role=role)
+            messages.success(request, "Account created successfully! Please log in.")
+            return redirect('user_login')
+        except Exception as e:
+            messages.error(request, f"Error creating account: {str(e)}")
+            return render(request, "user_signup.html")
+
+    return render(request, "user_signup.html")
+
+
+# ---------------------------
+# User Login
+# ---------------------------
+def user_login(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        user = authenticate(username=email, password=password)
+        if user:
+            login(request, user)
+            return redirect('dashboard')
+        else:
+            messages.error(request, "Invalid email or password.")
+            return redirect('user_login')
+    return render(request, "user_login.html")
+
+
+# ---------------------------
+# Dashboard
+# ---------------------------
+def dashboard(request):
+    if not request.user.is_authenticated:
+        return redirect('user_login')
+
+    profile = getattr(request.user, 'profile', None)
+    role = profile.role if profile else 'buyer'
+    search_query = request.GET.get('q', '')
+    saved_count = profile.saved_crops.count() if profile and hasattr(profile, 'saved_crops') else 0
+
+    if role == 'seller':
+        crops = Crop.objects.filter(owner=request.user)
+        orders = Order.objects.filter(crop__owner=request.user)
+    else:  # buyer
+        crops = Crop.objects.filter(sold=False)
+        orders = Order.objects.filter(buyer=request.user)
+
+        if search_query:
+            crops = crops.filter(
+                Q(crop_name__icontains=search_query) |
+                Q(crop_type__icontains=search_query) |
+                Q(owner__first_name__icontains=search_query)
+            )
+
+    return render(request, "dashboard.html", {
+        "role": role,
+        "crops": crops,
+        "orders": orders,
+        "search_query": search_query,
+        "saved_count": saved_count
+    })
+
+
+# ---------------------------
+# Saved/Favorite Crops (Buyer)
+# ---------------------------
+def saved_crops(request):
+    if not request.user.is_authenticated:
+        return redirect('user_login')
+
+    profile = getattr(request.user, 'profile', None)
+    saved_crops_list = profile.saved_crops.all() if profile and hasattr(profile, 'saved_crops') else []
+
+    return render(request, 'saved_crops.html', {
+        "saved_crops": saved_crops_list
+    })
+
+
+# ---------------------------
+# Crop CRUD (Seller)
+# ---------------------------
+def add_crop(request):
+    if not request.user.is_authenticated:
+        return redirect('user_login')
+
+    if request.method == "POST":
+        crop_name = request.POST.get("crop_name")
+        crop_type = request.POST.get("crop_type")
+        quantity = request.POST.get("quantity")
+        price_per_unit = request.POST.get("price_per_unit")
+        description = request.POST.get("description")
+
+        Crop.objects.create(
+            owner=request.user,
+            crop_name=crop_name,
+            crop_type=crop_type,
+            quantity=quantity,
+            price_per_unit=price_per_unit,
+            description=description
+        )
+        messages.success(request, "Crop added successfully!")
+        return redirect('dashboard')
+
+    return render(request, "add_crop.html")
+
+
+def edit_crop(request, crop_id):
+    crop = get_object_or_404(Crop, id=crop_id)
+    if crop.owner != request.user:
+        messages.error(request, "Not authorized")
+        return redirect('dashboard')
+
+    if request.method == "POST":
+        crop.crop_name = request.POST.get("crop_name")
+        crop.crop_type = request.POST.get("crop_type")
+        crop.quantity = request.POST.get("quantity")
+        crop.price_per_unit = request.POST.get("price_per_unit")
+        crop.description = request.POST.get("description")
+        crop.save()
+        messages.success(request, "Crop updated!")
+        return redirect('dashboard')
+
+    return render(request, "edit_crop.html", {"crop": crop})
+
+
+def delete_crop(request, crop_id):
+    crop = get_object_or_404(Crop, id=crop_id)
+    if crop.owner != request.user:
+        messages.error(request, "Not authorized")
+        return redirect('dashboard')
+    crop.delete()
+    messages.success(request, "Crop deleted!")
+    return redirect('dashboard')
+
+
+# ---------------------------
+# Place Order (Buyer)
+# ---------------------------
+def place_order(request, crop_id):
+    if not request.user.is_authenticated:
+        return redirect('user_login')
+
+    crop = get_object_or_404(Crop, id=crop_id)
+    if request.method == "POST":
+        quantity = int(request.POST.get("quantity"))
+        if quantity > crop.quantity:
+            messages.error(request, "Quantity exceeds available stock")
+            return redirect('dashboard')
+
+        total_price = quantity * crop.price_per_unit
+        Order.objects.create(buyer=request.user, crop=crop, quantity=quantity, total_price=total_price)
+        crop.quantity -= quantity
+        if crop.quantity == 0:
+            crop.sold = True
+        crop.save()
+        messages.success(request, "Order placed successfully!")
+        return redirect('dashboard')
+
+    return render(request, "place_order.html", {"crop": crop})
+
+
+# ---------------------------
+# User Profile
+# ---------------------------
+def profile(request):
+    if not request.user.is_authenticated:
+        return redirect('user_login')
+
+    if request.method == "POST":
+        request.user.first_name = request.POST.get("first_name")
+        request.user.email = request.POST.get("email")
+        request.user.save()
+        messages.success(request, "Profile updated!")
+        return redirect('profile')
+
+    orders = Order.objects.filter(buyer=request.user)
+    return render(request, "profile.html", {"orders": orders})
+
+
+# ---------------------------
+# Logout
+# ---------------------------
+def user_logout(request):
+    logout(request)
+    return redirect('home')
