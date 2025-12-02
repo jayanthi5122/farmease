@@ -5,6 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from .models import Crop, Order, UserProfile
 
+
 # ---------------------------
 # Home Page
 # ---------------------------
@@ -65,7 +66,7 @@ def user_login(request):
 
 
 # ---------------------------
-# Dashboard
+# Dashboard (Buyer/Seller split)
 # ---------------------------
 def dashboard(request):
     if not request.user.is_authenticated:
@@ -79,6 +80,7 @@ def dashboard(request):
     if role == 'seller':
         crops = Crop.objects.filter(owner=request.user)
         orders = Order.objects.filter(crop__owner=request.user)
+        template_name = "dashboard_seller.html"
     else:  # buyer
         crops = Crop.objects.filter(sold=False)
         orders = Order.objects.filter(buyer=request.user)
@@ -90,7 +92,9 @@ def dashboard(request):
                 Q(owner__first_name__icontains=search_query)
             )
 
-    return render(request, "dashboard.html", {
+        template_name = "dashboard_buyer.html"
+
+    return render(request, template_name, {
         "role": role,
         "crops": crops,
         "orders": orders,
@@ -198,6 +202,27 @@ def place_order(request, crop_id):
 
 
 # ---------------------------
+# My Orders (Separate Page)
+# ---------------------------
+def my_orders(request):
+    if not request.user.is_authenticated:
+        return redirect('user_login')
+
+    profile = getattr(request.user, 'profile', None)
+    role = profile.role if profile else 'buyer'
+
+    if role == 'seller':
+        orders = Order.objects.filter(crop__owner=request.user)
+    else:
+        orders = Order.objects.filter(buyer=request.user)
+
+    return render(request, 'my_orders.html', {
+        "orders": orders,
+        "role": role
+    })
+
+
+# ---------------------------
 # User Profile
 # ---------------------------
 def profile(request):
@@ -220,4 +245,4 @@ def profile(request):
 # ---------------------------
 def user_logout(request):
     logout(request)
-    return redirect('home')
+    return redirect('user_login')

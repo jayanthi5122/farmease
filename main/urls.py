@@ -22,6 +22,7 @@ urlpatterns = [
     # ---------------------------
     path("dashboard/", views.dashboard, name="dashboard"),
     path("profile/", views.profile, name="profile"),
+    path("my-orders/", views.my_orders, name="my_orders"),
 
     # ---------------------------
     # Crop Management (Seller)
