@@ -40,6 +40,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install --no-cache-dir --only-binary=:all: -r requirements.txt
+          
+      - name: Install AWS EB CLI
+        run: |
+          curl -O https://s3.amazonaws.com/elasticbeanstalk-cli-resources/releases/aws-elastic-beanstalk-cli-setup.py
+          python aws-elastic-beanstalk-cli-setup.py --quiet
+     
 
 
       # 6. Run SonarCloud Scan
