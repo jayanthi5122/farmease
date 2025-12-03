@@ -13,42 +13,49 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Checkout the repo
+      # 1. Checkout repo
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Set up Python 3.11
-      - name: Set up Python
+      # 2. Set up Python 3.10 for EB CLI
+      - name: Set up Python 3.10 for EB CLI
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      # 3. Install AWS EB CLI via official script (Python 3.10)
+      - name: Install AWS EB CLI
+        run: |
+          curl -O https://s3.amazonaws.com/elasticbeanstalk-cli-resources/releases/aws-elastic-beanstalk-cli-setup.py
+          python aws-elastic-beanstalk-cli-setup.py --quiet
+
+      # 4. Switch back to Python 3.11 for app dependencies
+      - name: Set up Python 3.11 for app
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      # 3. Install system dependencies for building Python packages
+      # 5. Install system dependencies for building Python packages
       - name: Install system dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential libssl-dev libffi-dev python3-dev
 
-      # 4. Upgrade pip and install AWS CLI
-      - name: Install AWS CLI
-        run: |
-          python -m pip install --upgrade pip
-          python -m pip install --upgrade awscli
-
-      # 5. Install Python dependencies
-      - name: Install Python dependencies
+      # 6. Upgrade pip, wheel, setuptools
+      - name: Upgrade pip, wheel, setuptools
         run: |
           python -m pip install --upgrade pip wheel setuptools
-          python -m pip install --no-cache-dir --only-binary=:all: -r requirements.txt
-          
-      - name: Install AWS EB CLI
+
+      # 7. Install app dependencies from requirements.txt
+      - name: Install Python dependencies
         run: |
-          curl -O https://s3.amazonaws.com/elasticbeanstalk-cli-resources/releases/aws-elastic-beanstalk-cli-setup.py
-          python aws-elastic-beanstalk-cli-setup.py --quiet
-     
+          python -m pip install --no-cache-dir -r requirements.txt
 
+      # 8. Install AWS CLI (optional, separate from EB CLI)
+      - name: Install AWS CLI
+        run: python -m pip install --upgrade awscli
 
-      # 6. Run SonarCloud Scan
+      # 9. SonarCloud scan
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
         with:
