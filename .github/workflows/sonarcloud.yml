@@ -26,8 +26,8 @@ jobs:
       # 3. Install AWS EB CLI via official script (Python 3.10)
       - name: Install AWS EB CLI
         run: |
-          curl -O https://s3.amazonaws.com/elasticbeanstalk-cli-resources/releases/aws-elastic-beanstalk-cli-setup.py
-          python aws-elastic-beanstalk-cli-setup.py --quiet
+          python -m pip install --upgrade pip
+          python -m pip install awsebcli==3.27.5 --no-cache-dir
 
       # 4. Switch back to Python 3.11 for app dependencies
       - name: Set up Python 3.11 for app
