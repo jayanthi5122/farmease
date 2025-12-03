@@ -11,9 +11,12 @@ on:
 jobs:
   sonarcloud:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -23,11 +26,14 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
+          pip install --no-cache-dir -r requirements.txt
 
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          organization: kishore-0501
-          projectKey: kishore-0501_farmease
-          token: ${{ secrets.SONAR_TOKEN }}
+          args: >
+            -Dsonar.organization=kishore-0501
+            -Dsonar.projectKey=kishore-0501_farmease
+            -Dsonar.host.url=https://sonarcloud.io
