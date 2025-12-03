@@ -1,4 +1,4 @@
-name: SonarCloud Scan
+name: Python CI with SonarCloud
 
 on:
   push:
@@ -9,30 +9,41 @@ on:
       - main
 
 jobs:
-  sonarcloud:
+  build-and-scan:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
+    steps:
+      # 1. Checkout the repo
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. Set up Python 3.11
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.11'
 
-      - name: Set up Python and install dependencies
+      # 3. Install system dependencies for building Python packages
+      - name: Install system dependencies
         run: |
-          python -m pip install --upgrade pip awscli
+          sudo apt-get update
+          sudo apt-get install -y build-essential libssl-dev libffi-dev python3-dev
+
+      # 4. Upgrade pip and install AWS CLI
+      - name: Install AWS CLI
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade awscli
+
+      # 5. Install Python dependencies
+      - name: Install Python dependencies
+        run: |
           python -m pip install --no-cache-dir -r requirements.txt
 
+      # 6. Run SonarCloud Scan
       - name: SonarCloud Scan
         uses: sonarsource/sonarcloud-github-action@v2
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
-          args: >
-            -Dsonar.organization=kishore-0501
-            -Dsonar.projectKey=kishore-0501_farmease
-            -Dsonar.host.url=https://sonarcloud.io
+          organization: kishore-0501
+          projectKey: kishore-0501_farmease
+          token: ${{ secrets.SONAR_TOKEN }}
