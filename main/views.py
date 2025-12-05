@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from .models import Crop, Order, UserProfile
+import boto3
+from django.conf import settings
 
 
 # ---------------------------
@@ -140,14 +142,30 @@ def add_crop(request):
             price_per_unit=price_per_unit,
             description=description
         )
+
+        # ✅ SNS NOTIFICATION TRIGGER (ADDED BLOCK)
+        message = f"""
+        New Crop Added on Farmease!
+
+        Crop Name: {crop_name}
+        Crop Type: {crop_type}
+        Quantity: {quantity}
+        Price per Unit: {price_per_unit}
+        Description: {description}
+        """
+        send_sns_notification(message)
+        # ✅ END SNS BLOCK
+
         messages.success(request, "Crop added successfully!")
         return redirect('dashboard')
 
     return render(request, "add_crop.html")
 
 
+
 def edit_crop(request, crop_id):
     crop = get_object_or_404(Crop, id=crop_id)
+    
     if crop.owner != request.user:
         messages.error(request, "Not authorized")
         return redirect('dashboard')
@@ -159,6 +177,19 @@ def edit_crop(request, crop_id):
         crop.price_per_unit = request.POST.get("price_per_unit")
         crop.description = request.POST.get("description")
         crop.save()
+
+        # ✅ Trigger SNS notification
+        message = f"""
+        Crop Updated on Farmease!
+
+        Crop: {crop.crop_name}
+        Type: {crop.crop_type}
+        Quantity: {crop.quantity}
+        Price per Unit: {crop.price_per_unit}
+        Description: {crop.description}
+        """
+        send_sns_notification(message)
+
         messages.success(request, "Crop updated!")
         return redirect('dashboard')
 
@@ -246,3 +277,18 @@ def profile(request):
 def user_logout(request):
     logout(request)
     return redirect('user_login')
+    
+def send_sns_notification(message):
+    client = boto3.client(
+        "sns",
+        region_name=settings.AWS_REGION
+    )
+
+    response = client.publish(
+        TopicArn=settings.SNS_TOPIC_ARN,
+        Message=message,
+        Subject="Farmease Crop Update"
+    )
+
+    return response    
+    

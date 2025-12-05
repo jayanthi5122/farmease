@@ -19,6 +19,7 @@ DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 ALLOWED_HOSTS = ['*']  # Allow all for now (Elastic Beanstalk will assign a domain)
 CSRF_TRUSTED_ORIGINS = [
     'https://*.elasticbeanstalk.com',
+    'http://farmease-env.eba-i4ddempf.us-east-1.elasticbeanstalk.com',
     'https://2fa585ea017c4fb39d37df0427b9400d.vfs.cloud9.us-east-1.amazonaws.com'
 ]
 
@@ -129,3 +130,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 # Default Primary Key
 # -----------------------------------------
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+AWS_REGION = "us-east-1"
+SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:028971169403:farmease-crop-updates"
+
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
