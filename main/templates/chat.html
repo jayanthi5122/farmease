@@ -1,4 +1,4 @@
-<h2>Chat with {{ receiver.username }}</h2>
+<h2>Chat with {{ seller.username }}</h2>
 
 <div>
   {% for msg in messages %}
@@ -6,8 +6,8 @@
   {% endfor %}
 </div>
 
-<form method="POST">
+<form method="post">
   {% csrf_token %}
-  <input type="text" name="message" required>
+  <input type="text" name="message" placeholder="Enter your message" required>
   <button type="submit">Send</button>
 </form>
