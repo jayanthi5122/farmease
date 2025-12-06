@@ -6,6 +6,9 @@ from django.contrib.auth.models import User
 from .models import Crop, Order, UserProfile
 import boto3
 from django.conf import settings
+from .models import ChatMessage
+from django.contrib.auth.decorators import login_required
+
 
 
 # ---------------------------
@@ -271,35 +274,40 @@ def profile(request):
     return render(request, "profile.html", {"orders": orders})
     
     
+@login_required
+def chat_view(request, seller_id):
+    seller = User.objects.get(id=seller_id)
 
-def chat_view(request, receiver_id):
-    receiver = User.objects.get(id=receiver_id)
-
-    messages = ChatMessage.objects.filter(
-        sender=request.user, receiver=receiver
+    messages_list = ChatMessage.objects.filter(
+        sender=request.user, receiver=seller
     ) | ChatMessage.objects.filter(
-        sender=receiver, receiver=request.user
+        sender=seller, receiver=request.user
     )
+
+    messages_list = messages_list.order_by("timestamp")
 
     if request.method == "POST":
         msg = request.POST.get("message")
         ChatMessage.objects.create(
             sender=request.user,
-            receiver=receiver,
+            receiver=seller,
             message=msg
         )
-        return redirect("chat", receiver_id=receiver.id)
+        return redirect("chat", seller_id=seller.id)
 
     return render(request, "chat.html", {
-        "receiver": receiver,
-        "messages": messages
+        "seller": seller,
+        "messages": messages_list
     })
 
 
+@login_required
+def seller_inbox(request):
+    messages_list = ChatMessage.objects.filter(receiver=request.user).order_by("-timestamp")
+    return render(request, "seller_inbox.html", {"messages": messages_list})
 
-# ---------------------------
-# Logout
-# ---------------------------
+
+
 def user_logout(request):
     logout(request)
     return redirect('user_login')

@@ -6,7 +6,14 @@
     <!-- Navbar / Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Welcome, {{ request.user.first_name }} (Seller)</h2>
-        <div>
+        <div class="d-flex align-items-center">
+            <!-- ✅ COMMON CHAT ICON -->
+            <a href="{% url 'chat' request.user.id %}" 
+               title="Open Chat"
+               style="font-size: 22px; margin-right: 15px; text-decoration: none;">
+                💬
+            </a>
+
             <a href="{% url 'profile' %}" class="btn btn-info me-2">Profile</a>
             <a href="{% url 'my_orders' %}" class="btn btn-primary me-2">My Orders</a>
             <a href="{% url 'user_logout' %}" class="btn btn-danger">Logout</a>
@@ -19,6 +26,7 @@
             <h5 class="mb-0">Your Listed Crops</h5>
             <a href="{% url 'add_crop' %}" class="btn btn-light btn-sm">+ Add New Crop</a>
         </div>
+
         <div class="card-body p-0">
             {% if crops %}
             <div class="table-responsive">
@@ -33,6 +41,7 @@
                             <th>Actions</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {% for crop in crops %}
                         <tr>
@@ -43,11 +52,16 @@
                             <td>{{ crop.description }}</td>
                             <td>
                                 <a href="{% url 'edit_crop' crop.id %}" class="btn btn-warning btn-sm">Edit</a>
-                                <a href="{% url 'delete_crop' crop.id %}" class="btn btn-danger btn-sm" onclick="return confirm('Delete this crop?')">Delete</a>
+                                <a href="{% url 'delete_crop' crop.id %}" 
+                                   class="btn btn-danger btn-sm"
+                                   onclick="return confirm('Delete this crop?')">
+                                   Delete
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
                     </tbody>
+
                 </table>
             </div>
             {% else %}

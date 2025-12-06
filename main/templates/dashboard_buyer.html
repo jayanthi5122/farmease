@@ -19,8 +19,11 @@
             <h5 class="mb-0">Available Crops</h5>
         </div>
         <div class="card-body">
+
+            <!-- Search -->
             <form method="get" class="d-flex mb-3">
-                <input type="text" name="q" class="form-control me-2" placeholder="Search crops..." value="{{ search_query }}">
+                <input type="text" name="q" class="form-control me-2"
+                       placeholder="Search crops..." value="{{ search_query }}">
                 <button type="submit" class="btn btn-success">Search</button>
             </form>
 
@@ -34,9 +37,11 @@
                             <th>Quantity</th>
                             <th>Price (€)</th>
                             <th>Seller</th>
+                            <th>Chat</th>   <!-- ✅ NEW COLUMN -->
                             <th>Action</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         {% for crop in crops %}
                         <tr>
@@ -44,9 +49,22 @@
                             <td>{{ crop.crop_type }}</td>
                             <td>{{ crop.quantity }}</td>
                             <td>{{ crop.price_per_unit }}</td>
+
+                            <!-- ✅ Seller Name -->
                             <td>{{ crop.owner.first_name }}</td>
+
+                            <!-- ✅ Chat Emoji -->
+                            <td class="text-center">
+                                <a href="{% url 'chat' crop.owner.id %}" title="Chat with seller"
+                                   style="font-size: 20px; text-decoration: none;">
+                                    💬
+                                </a>
+                            </td>
+
+                            <!-- ✅ Buy Button -->
                             <td>
-                                <a href="{% url 'place_order' crop.id %}" class="btn btn-success btn-sm">Buy</a>
+                                <a href="{% url 'place_order' crop.id %}"
+                                   class="btn btn-success btn-sm">Buy</a>
                             </td>
                         </tr>
                         {% endfor %}
@@ -56,6 +74,7 @@
             {% else %}
             <p class="text-muted">No crops available right now.</p>
             {% endif %}
+
         </div>
     </div>
 
