@@ -5,22 +5,23 @@ on:
     branches:
       - main
 
+# -------------------- #
+# 1️⃣ BUILD JOB
+# -------------------- #
 jobs:
-  farmease-job-pipeline:
+  build:
+    name: Build & Install
     runs-on: ubuntu-latest
 
     steps:
-      # Checkout the code
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      # Python setup (SAFE VERSION)
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.10"
 
-      # Install dependencies
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -29,18 +30,62 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pylint awscli
 
-      # Run tests
+
+# -------------------- #
+# 2️⃣ TEST JOB
+# -------------------- #
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+    needs: build   # ✅ only runs if build succeeds
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - run: pip install -r requirements.txt
+
       - name: Run tests
         run: |
           python -m pytest || true
 
-      # Run pylint
+
+# -------------------- #
+# 3️⃣ PYLINT JOB
+# -------------------- #
+  lint:
+    name: Code Quality (Pylint)
+    runs-on: ubuntu-latest
+    needs: test   # ✅ only runs if tests complete
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.10"
+
+      - run: pip install pylint
+
       - name: Run pylint (SAFE)
         run: |
           pylint main --disable=import-error --fail-under=7.0 || true
 
 
-      # Run SonarCloud
+# -------------------- #
+# 4️⃣ SONARCLOUD JOB
+# -------------------- #
+  sonar:
+    name: SonarCloud Scan
+    runs-on: ubuntu-latest
+    needs: lint
+
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Run SonarCloud
         uses: sonarsource/sonarqube-scan-action@v4
         env:
@@ -51,13 +96,23 @@ jobs:
             -Dsonar.projectKey=kishore-0501_farmease
             -Dsonar.organization=kishore-0501
 
-      # Generate build ZIP
-      - name: Generate zip files
+
+# -------------------- #
+# 5️⃣ PACKAGE + UPLOAD JOB
+# -------------------- #
+  package:
+    name: Package & Upload
+    runs-on: ubuntu-latest
+    needs: sonar
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Zip application
         run: |
           zip -r farmease.zip . -x "*.git*" "venv*" "__pycache__*"
 
-      # Upload build to S3 bucket
-      - name: Upload to S3 bucket
+      - name: Upload to S3
         run: |
           aws s3 cp farmease.zip s3://elasticbeanstalk-us-east-1-028971169403/farmease.zip --region us-east-1
         env:
@@ -66,8 +121,17 @@ jobs:
           AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
           AWS_DEFAULT_REGION: us-east-1
 
-      # Deploy to Elastic Beanstalk
-      - name: Deploy to EBS
+
+# -------------------- #
+# 6️⃣ DEPLOY JOB
+# -------------------- #
+  deploy:
+    name: Deploy to Elastic Beanstalk
+    runs-on: ubuntu-latest
+    needs: package
+
+    steps:
+      - name: Deploy New Version
         run: |
           aws elasticbeanstalk create-application-version \
             --application-name "farmease" \
