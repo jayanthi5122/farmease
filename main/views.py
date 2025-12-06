@@ -269,6 +269,32 @@ def profile(request):
 
     orders = Order.objects.filter(buyer=request.user)
     return render(request, "profile.html", {"orders": orders})
+    
+    
+
+def chat_view(request, receiver_id):
+    receiver = User.objects.get(id=receiver_id)
+
+    messages = ChatMessage.objects.filter(
+        sender=request.user, receiver=receiver
+    ) | ChatMessage.objects.filter(
+        sender=receiver, receiver=request.user
+    )
+
+    if request.method == "POST":
+        msg = request.POST.get("message")
+        ChatMessage.objects.create(
+            sender=request.user,
+            receiver=receiver,
+            message=msg
+        )
+        return redirect("chat", receiver_id=receiver.id)
+
+    return render(request, "chat.html", {
+        "receiver": receiver,
+        "messages": messages
+    })
+
 
 
 # ---------------------------

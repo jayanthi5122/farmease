@@ -35,4 +35,6 @@ urlpatterns = [
     # Orders (Buyer)
     # ---------------------------
     path("place_order/<int:crop_id>/", views.place_order, name="place_order"),
+    path("chat/<int:receiver_id>/", views.chat_view, name="chat"),
+
 ]

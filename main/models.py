@@ -43,3 +43,14 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.id} - {self.crop.crop_name}"
+ 
+        
+class ChatMessage(models.Model):
+    sender = models.ForeignKey(User, related_name="sender", on_delete=models.CASCADE)
+    receiver = models.ForeignKey(User, related_name="receiver", on_delete=models.CASCADE)
+    message = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.sender.username} → {self.receiver.username}: {self.message[:30]}"
+
