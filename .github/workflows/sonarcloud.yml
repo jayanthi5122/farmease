@@ -34,21 +34,21 @@ jobs:
         run: |
           python -m pytest || true
 
-      # Run pylint
-      # - name: Run pylint
-      #   run: |
-      #     pylint --fail-under=7.0 $(git ls-files '*.py') || true
+      Run pylint
+      - name: Run pylint
+        run: |
+          pylint --fail-under=7.0 $(git ls-files '*.py') || true
 
-      # Run SonarCloud
-      # - name: Run SonarCloud
-      #   uses: sonarsource/sonarqube-scan-action@v4
-      #   env:
-      #     SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      #     SONAR_HOST_URL: https://sonarcloud.io
-      #   with:
-      #     args: >
-      #       -Dsonar.projectKey=kishore-0501_farmease
-      #       -Dsonar.organization=kishore-0501
+      Run SonarCloud
+      - name: Run SonarCloud
+        uses: sonarsource/sonarqube-scan-action@v4
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+          SONAR_HOST_URL: https://sonarcloud.io
+        with:
+          args: >
+            -Dsonar.projectKey=kishore-0501_farmease
+            -Dsonar.organization=kishore-0501
 
       # Generate build ZIP
       - name: Generate zip files
