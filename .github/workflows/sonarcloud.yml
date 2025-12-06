@@ -5,9 +5,7 @@ on:
     branches:
       - main
 
-# -------------------- #
-# 1️⃣ BUILD JOB
-# -------------------- #
+
 jobs:
   build:
     name: Build & Install
@@ -31,9 +29,7 @@ jobs:
           pip install pytest pylint awscli
 
 
-# -------------------- #
-# 2️⃣ TEST JOB
-# -------------------- #
+
   test:
     name: Run Tests
     runs-on: ubuntu-latest
@@ -53,9 +49,7 @@ jobs:
           python -m pytest || true
 
 
-# -------------------- #
-# 3️⃣ PYLINT JOB
-# -------------------- #
+
   lint:
     name: Code Quality (Pylint)
     runs-on: ubuntu-latest
@@ -75,9 +69,7 @@ jobs:
           pylint main --disable=import-error --fail-under=7.0 || true
 
 
-# -------------------- #
-# 4️⃣ SONARCLOUD JOB
-# -------------------- #
+
   sonar:
     name: SonarCloud Scan
     runs-on: ubuntu-latest
@@ -97,9 +89,7 @@ jobs:
             -Dsonar.organization=kishore-0501
 
 
-# -------------------- #
-# 5️⃣ PACKAGE + UPLOAD JOB
-# -------------------- #
+
   package:
     name: Package & Upload
     runs-on: ubuntu-latest
@@ -122,9 +112,7 @@ jobs:
           AWS_DEFAULT_REGION: us-east-1
 
 
-# -------------------- #
-# 6️⃣ DEPLOY JOB
-# -------------------- #
+
   deploy:
     name: Deploy to Elastic Beanstalk
     runs-on: ubuntu-latest
