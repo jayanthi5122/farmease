@@ -38,4 +38,6 @@ urlpatterns = [
     path("chat/<int:seller_id>/", views.chat_view, name="chat"),
     path("seller/chat/", views.seller_chat_list, name="seller_chat_list"),
     path("seller/chat/<int:buyer_id>/", views.seller_chat_view, name="seller_chat_view"),
+    path('faq/', views.faq_page, name='faq'),
+    path('about/', views.about_page, name='about'),
 ]

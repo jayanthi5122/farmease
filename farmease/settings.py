@@ -16,7 +16,12 @@ SECRET_KEY = os.environ.get(
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['*']  # Allow all for now (Elastic Beanstalk will assign a domain)
+ALLOWED_HOSTS = [
+    'farmease-env.eba-i4ddempf.us-east-1.elasticbeanstalk.com',
+    '2fa585ea017c4fb39d37df0427b9400d.vfs.cloud9.us-east-1.amazonaws.com',
+    'localhost',
+    '127.0.0.1'
+]  # Allow all for now (Elastic Beanstalk will assign a domain)
 CSRF_TRUSTED_ORIGINS = [
     'https://*.elasticbeanstalk.com',
     'http://farmease-env.eba-i4ddempf.us-east-1.elasticbeanstalk.com',

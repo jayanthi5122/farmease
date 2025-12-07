@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -89,7 +89,7 @@ def dashboard(request):
         orders = Order.objects.filter(crop__owner=request.user)
         template_name = "dashboard_seller.html"
     else:  # buyer
-        crops = Crop.objects.filter(sold=False)
+        crops = Crop.objects.filter(sold=False).annotate(total_orders=Count('order'))
         orders = Order.objects.filter(buyer=request.user)
 
         if search_query:
@@ -346,7 +346,11 @@ def seller_chat_view(request, buyer_id):
     })
 
 
-
+def faq_page(request):
+    return render(request, "faq.html")
+    
+def about_page(request):
+    return render(request, "about.html")
 
 
 def user_logout(request):
