@@ -36,5 +36,6 @@ urlpatterns = [
     # ---------------------------
     path("place_order/<int:crop_id>/", views.place_order, name="place_order"),
     path("chat/<int:seller_id>/", views.chat_view, name="chat"),
-    path("seller/inbox/", views.seller_inbox, name="seller_inbox"),
+    path("seller/chat/", views.seller_chat_list, name="seller_chat_list"),
+    path("seller/chat/<int:buyer_id>/", views.seller_chat_view, name="seller_chat_view"),
 ]
