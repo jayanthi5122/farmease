@@ -47,11 +47,17 @@
                         <tr>
                             <td>{{ crop.crop_name }}</td>
                             <td>{{ crop.crop_type }}</td>
-                            <td>{{ crop.quantity }}</td>
+                            <td>
+                                {{ crop.quantity }}
+                                {% if crop.total_orders %}
+                                    <br><small class="text-success">{{ crop.total_orders }} buyers purchased this</small>
+                                {% endif %}
+                            </td>
                             <td>{{ crop.price_per_unit }}</td>
 
                             <!-- ✅ Seller Name -->
                             <td>{{ crop.owner.first_name }}</td>
+
 
                             <!-- ✅ Chat Emoji -->
                             <td class="text-center">

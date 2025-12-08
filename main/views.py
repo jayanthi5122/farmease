@@ -1,4 +1,4 @@
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -82,12 +82,14 @@ def dashboard(request):
     search_query = request.GET.get('q', '')
     saved_count = profile.saved_crops.count() if profile and hasattr(profile, 'saved_crops') else 0
 
+    unread_count = ChatMessage.objects.filter(receiver=request.user).count()
+
     if role == 'seller':
         crops = Crop.objects.filter(owner=request.user)
         orders = Order.objects.filter(crop__owner=request.user)
         template_name = "dashboard_seller.html"
     else:  # buyer
-        crops = Crop.objects.filter(sold=False)
+        crops = Crop.objects.filter(sold=False).annotate(total_orders=Count('order'))
         orders = Order.objects.filter(buyer=request.user)
 
         if search_query:
@@ -104,8 +106,10 @@ def dashboard(request):
         "crops": crops,
         "orders": orders,
         "search_query": search_query,
-        "saved_count": saved_count
+        "saved_count": saved_count,
+        "unread_count": unread_count   # ✅ THIS LINE ENABLES NOTIFICATIONS
     })
+
 
 
 # ---------------------------
@@ -279,10 +283,10 @@ def chat_view(request, seller_id):
     seller = User.objects.get(id=seller_id)
 
     messages_list = ChatMessage.objects.filter(
-        sender=request.user, receiver=seller
-    ) | ChatMessage.objects.filter(
-        sender=seller, receiver=request.user
-    )
+        Q(sender=request.user, receiver=seller) |
+        Q(sender=seller, receiver=request.user)
+    ).order_by("timestamp")
+
 
     messages_list = messages_list.order_by("timestamp")
 
@@ -299,13 +303,54 @@ def chat_view(request, seller_id):
         "seller": seller,
         "messages": messages_list
     })
-
-
+    
 @login_required
-def seller_inbox(request):
-    messages_list = ChatMessage.objects.filter(receiver=request.user).order_by("-timestamp")
-    return render(request, "seller_inbox.html", {"messages": messages_list})
+def seller_chat_list(request):
+    buyers = (
+        ChatMessage.objects
+        .filter(receiver=request.user)
+        .values("sender__id", "sender__first_name", "sender__username")
+        .distinct()
+    )
 
+    unread_count = ChatMessage.objects.filter(receiver=request.user).count()
+
+    return render(request, "seller_chat_list.html", {
+        "buyers": buyers,
+        "unread_count": unread_count
+    })
+    
+    
+@login_required
+def seller_chat_view(request, buyer_id):
+    buyer = get_object_or_404(User, id=buyer_id)
+
+    messages_list = ChatMessage.objects.filter(
+        Q(sender=request.user, receiver=buyer) |
+        Q(sender=buyer, receiver=request.user)
+    ).order_by("timestamp")
+
+    if request.method == "POST":
+        msg = request.POST.get("message")
+        if msg:
+            ChatMessage.objects.create(
+                sender=request.user,
+                receiver=buyer,
+                message=msg
+            )
+            return redirect("seller_chat_view", buyer_id=buyer.id)
+
+    return render(request, "seller_chat.html", {
+        "buyer": buyer,
+        "messages": messages_list
+    })
+
+
+def faq_page(request):
+    return render(request, "faq.html")
+    
+def about_page(request):
+    return render(request, "about.html")
 
 
 def user_logout(request):

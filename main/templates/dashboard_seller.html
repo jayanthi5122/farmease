@@ -3,15 +3,31 @@
 
 <div class="container my-5">
 
-    <!-- Navbar / Header -->
+    <!-- ✅ Navbar / Header -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2>Welcome, {{ request.user.first_name }} (Seller)</h2>
+
         <div class="d-flex align-items-center">
-            <!-- ✅ COMMON CHAT ICON -->
-            <a href="{% url 'chat' request.user.id %}" 
-               title="Open Chat"
-               style="font-size: 22px; margin-right: 15px; text-decoration: none;">
+
+            <!-- ✅ FIXED CHAT ICON WITH NOTIFICATION BADGE -->
+            <a href="{% url 'seller_chat_list' %}" 
+               title="Open Chat Inbox"
+               style="font-size: 22px; margin-right: 20px; position: relative; text-decoration: none;">
                 💬
+
+                {% if unread_count > 0 %}
+                <span style="
+                    position: absolute;
+                    top: -6px;
+                    right: -10px;
+                    background: red;
+                    color: white;
+                    border-radius: 50%;
+                    padding: 2px 7px;
+                    font-size: 12px;">
+                    {{ unread_count }}
+                </span>
+                {% endif %}
             </a>
 
             <a href="{% url 'profile' %}" class="btn btn-info me-2">Profile</a>
@@ -20,7 +36,7 @@
         </div>
     </div>
 
-    <!-- Listed Crops -->
+    <!-- ✅ Listed Crops -->
     <div class="card mb-5 shadow-sm">
         <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
             <h5 class="mb-0">Your Listed Crops</h5>
